@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+<PropertyGroup>
+  <NoWarn>$(NoWarn);CS1591;CS1573;NU1902;NU1903</NoWarn>
+</PropertyGroup>
+
+<PropertyGroup>
+  <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+</PropertyGroup>
+
+<ItemGroup>
+  <None Include="wwwroot\**\*">
+    <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+  </None>
+  </ItemGroup>
+
+  <ItemGroup>
+  <ProjectReference Include="..\Core\Core.csproj" />
+  <ProjectReference Include="..\NDI\NDI.csproj" />
+  <PackageReference Include = "NDILibDotNet6" Version="1.0.11" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
+    <None Include="models\**\*">
+    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

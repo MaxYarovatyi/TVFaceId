@@ -1,0 +1,86 @@
+[
+    {
+        "name": "Kaja Kallas",
+        "country": "EU",
+        "role": "High Representative for Foreign Affairs",
+        "wikipedia": "Kaja_Kallas"
+    },
+    {
+        "name": "Ursula von der Leyen",
+        "country": "EU",
+        "role": "President of the European Commission",
+        "wikipedia": "Ursula_von_der_Leyen"
+    },
+    {
+        "name": "Mark Rutte",
+        "country": "NATO",
+        "role": "Secretary General of NATO",
+        "wikipedia": "Mark_Rutte"
+    },
+    {
+        "name": "Marta Kos",
+        "country": "EU",
+        "role": "EU Enlargement Commissioner",
+        "wikipedia": "Marta_Kos"
+    },
+    {
+        "name": "Volodymyr Zelensky",
+        "country": "Ukraine",
+        "role": "President",
+        "wikipedia": "Volodymyr_Zelensky"
+    },
+    {
+        "name": "Andrii Sybiha",
+        "country": "Ukraine",
+        "role": "Minister of Foreign Affairs",
+        "wikipedia": "Andrii_Sybiha"
+    },
+    {
+        "name": "Rustem Umerov",
+        "country": "Ukraine",
+        "role": "Minister of Defence",
+        "wikipedia": "Rustem_Umerov"
+    },
+    {
+        "name": "Andriy Yermak",
+        "country": "Ukraine",
+        "role": "Head of the Office of the President",
+        "wikipedia": "Andriy_Yermak"
+    },
+    {
+        "name": "Marco Rubio",
+        "country": "USA",
+        "role": "Secretary of State",
+        "wikipedia": "Marco_Rubio"
+    },
+    {
+        "name": "Pete Hegseth",
+        "country": "USA",
+        "role": "Secretary of Defense",
+        "wikipedia": "Pete_Hegseth"
+    },
+    {
+        "name": "Keith Kellogg",
+        "country": "USA",
+        "role": "Special Envoy for Ukraine",
+        "wikipedia": "Keith_Kellogg"
+    },
+    {
+        "name": "António Guterres",
+        "country": "UN",
+        "role": "Secretary-General of the United Nations",
+        "wikipedia": "António_Guterres"
+    },
+    {
+        "name": "Dmytro Kuleba",
+        "country": "Ukraine",
+        "role": "Former Minister of Foreign Affairs",
+        "wikipedia": "Dmytro_Kuleba"
+    },
+    {
+        "name": "Jens Stoltenberg",
+        "country": "NATO",
+        "role": "Former Secretary General of NATO",
+        "wikipedia": "Jens_Stoltenberg"
+    }
+]
