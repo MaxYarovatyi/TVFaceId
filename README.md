@@ -31,9 +31,6 @@ Requirements: Windows x64, .NET 10 SDK, NDI Runtime or NDI Tools.
 
 Windows build: `dotnet publish Web/Web.csproj -c Release -r win-x64 --self-contained true -o publish`
 
-## Evaluation
-[TODO: held-out test images per person, results at threshold 0.71: correct / wrong person / not recognised. Add a small table.]
-
 ## Engineering notes
 Bugs found and fixed while building it: a double sigmoid in SCRFD post-processing, a wrong anchor offset, an IoU typo in NMS, Wikipedia API rate limiting (fixed with 50-title batches), and a race condition in the NDI receiver (fixed with a grace period).
 
