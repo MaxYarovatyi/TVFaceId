@@ -6,131 +6,245 @@
 <title>Minister ID</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: #07070f; color: #e2e2e2; font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
+
+  :root {
+    --bg: #0a0f1a;
+    --panel: #111827;
+    --panel-2: #1e293b;
+    --border: #334155;
+    --text: #f8fafc;     /* names, headings      ~18:1 on --panel */
+    --text-2: #cbd5e1;   /* country, status      ~11:1 */
+    --text-3: #94a3b8;   /* roles, hints         ~6:1  */
+    --accent: #60a5fa;
+    --ok: #4ade80;
+    --bad: #f87171;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-size: 18px;
+    min-height: 100vh;
+  }
 
   header {
-    background: #0f0f1a; border-bottom: 1px solid #1e1e30;
-    padding: 12px 20px; display: flex; align-items: center;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
     justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
   }
-  .logo { font-size: 15px; font-weight: 700; color: #fff; }
-  .logo span { color: #4f8ef7; }
+  .logo { font-size: 26px; font-weight: 700; color: var(--text); }
+  .logo span { color: var(--accent); }
 
-  .conn-status { display: flex; align-items: center; gap: 7px; font-size: 12px; color: #6b7280; }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; }
-  .dot.on { background: #22c55e; box-shadow: 0 0 6px #22c55e88; }
+  .status { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; font-size: 17px; color: var(--text-2); }
+  .status-item { display: flex; align-items: center; gap: 10px; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--bad); flex: none; }
+  .dot.on { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
 
-  main { padding: 24px 20px; display: flex; flex-wrap: wrap; gap: 18px; align-content: flex-start; }
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    gap: 24px;
+    padding: 24px 28px;
+    align-items: start;
+  }
 
-  .empty { width: 100%; text-align: center; padding-top: 100px; color: #2e2e48; font-size: 18px; }
-  .empty svg { display: block; margin: 0 auto 12px; opacity: .15; }
+  .video-panel {
+    background: #000;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    position: sticky;
+    top: 16px;
+  }
+  .video-panel img { display: block; width: 100%; height: auto; }
+
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 20px;
+    align-content: start;
+  }
+
+  .empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 120px 0 0;
+    color: var(--text-3);
+    font-size: 26px;
+  }
+  .empty svg { display: block; margin: 0 auto 16px; opacity: .6; }
 
   .card {
-    background: #0f0f1a; border: 1px solid #1a1a2e;
-    border-radius: 14px; width: 210px; overflow: hidden;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
     animation: fadeIn .3s ease;
   }
-  @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1} }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; } }
 
   .card-photo {
-    width: 100%; height: 185px; object-fit: cover;
-    object-position: center top; background: #111; display: block;
+    width: 100%;
+    height: 300px;
+    object-fit: cover;
+    object-position: center top;
+    background: var(--panel-2);
+    display: block;
   }
-  .card-body { padding: 12px; }
+  .card-photo.missing { background: linear-gradient(135deg, #1e293b, #0f172a); }
+
+  .card-body { padding: 16px 18px 18px; }
 
   .card-name {
-    font-size: 14px; font-weight: 600; display: block;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-    color: #e2e2e2; text-decoration: none; cursor: pointer;
-    transition: color .15s;
+    display: block;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text);
+    text-decoration: none;
   }
-  .card-name:hover { color: #4f8ef7; text-decoration: underline; }
+  .card-name:hover, .card-name:focus-visible { color: var(--accent); text-decoration: underline; }
 
-  .card-country { font-size: 11px; color: #6b7280; margin-top: 2px; }
-  .card-role    { font-size: 10px; color: #4b5563; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-country { font-size: 18px; color: var(--text-2); margin-top: 6px; }
+  .card-role { font-size: 16px; line-height: 1.35; color: var(--text-3); margin-top: 4px; }
 
-  .conf-row { display: flex; align-items: center; gap: 7px; margin-top: 9px; }
-  .conf-track { flex: 1; height: 3px; background: #1e1e30; border-radius: 99px; overflow: hidden; }
-  .conf-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#3b82f6,#22c55e); transition: width .4s; }
-  .conf-val   { font-size: 10px; color: #4b5563; min-width: 28px; text-align: right; }
+  .conf-row { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  .conf-track { flex: 1; height: 8px; background: var(--panel-2); border-radius: 99px; overflow: hidden; }
+  .conf-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #3b82f6, #22c55e); transition: width .4s; }
+  .conf-val { font-size: 18px; font-weight: 600; color: var(--text-2); min-width: 52px; text-align: right; }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .video-panel { position: static; }
+  }
 </style>
 </head>
 <body>
 
 <header>
   <div class="logo">Minister <span>ID</span></div>
-  <div class="conn-status">
-    <div class="dot" id="dot"></div>
-    <span id="connText">Connecting…</span>
+  <div class="status">
+    <div class="status-item"><div class="dot" id="connDot"></div><span id="connText">Connecting…</span></div>
+    <div class="status-item"><div class="dot" id="ndiDot"></div><span id="ndiText">NDI: unknown</span></div>
+    <div class="status-item"><div class="dot" id="dbDot"></div><span id="dbText">Loading faces database…</span></div>
   </div>
 </header>
 
-<main id="main">
-  <div class="empty">
-    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-      <circle cx="12" cy="8" r="4"/>
-      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-    </svg>
-    Waiting for faces…
-  </div>
-</main>
+<div class="layout">
+  <section class="video-panel" aria-label="Live video">
+    <img id="video" src="/video" alt="Live video from the NDI source">
+  </section>
+
+  <section class="cards" id="main" aria-live="polite">
+    <div class="empty">
+      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+        <circle cx="12" cy="8" r="4"/>
+        <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+      </svg>
+      Waiting for faces…
+    </div>
+  </section>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
 <script>
-const dot      = document.getElementById('dot');
-const connText = document.getElementById('connText');
+const $ = id => document.getElementById(id);
+
+// Escape anything coming from the server before it goes into markup.
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c =>
+  ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
+const NDI_LABELS = {
+  connected: 'NDI: connected',
+  disconnected: 'NDI: disconnected',
+  connecting: 'NDI: connecting…',
+  reconnecting: 'NDI: reconnecting…'
+};
+
+const emptyState = text => `
+  <div class="empty">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+      <circle cx="12" cy="8" r="4"/>
+      <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+    </svg>
+    ${esc(text)}
+  </div>`;
+
+function renderFaces(faces) {
+  const main = $('main');
+  if (!faces?.length) {
+    main.innerHTML = emptyState('No faces detected');
+    return;
+  }
+
+  main.innerHTML = faces.map(f => {
+    const conf = Math.max(0, Math.min(100, Number(f.confidence) || 0));
+    return `
+    <article class="card">
+      <img class="card-photo" src="${esc(f.photoUrl)}" alt="${esc(f.name)}"
+           onerror="this.classList.add('missing')">
+      <div class="card-body">
+        <a class="card-name"
+           href="https://www.google.com/search?q=${encodeURIComponent(f.name + ' ' + f.country)}"
+           target="_blank" rel="noopener" title="Search on Google">${esc(f.name)}</a>
+        <div class="card-country">${esc(f.country)}</div>
+        <div class="card-role" title="${esc(f.role)}">${esc(f.role)}</div>
+        <div class="conf-row">
+          <div class="conf-track"><div class="conf-fill" style="width:${conf}%"></div></div>
+          <div class="conf-val">${conf}%</div>
+        </div>
+      </div>
+    </article>`;
+  }).join('');
+}
+
+function setDot(id, on) { $(id).classList.toggle('on', !!on); }
+
+// Live video: MJPEG stream. If it drops (server restart), retry after a pause.
+const video = $('video');
+video.addEventListener('error', () => {
+  setTimeout(() => { video.src = '/video?t=' + Date.now(); }, 2000);
+});
 
 const conn = new signalR.HubConnectionBuilder()
   .withUrl('/hub/recognition')
   .withAutomaticReconnect([2000, 3000, 5000, 10000])
   .build();
 
-conn.on('RecognitionUpdate', faces => {
-  const main = document.getElementById('main');
+conn.on('RecognitionUpdate', renderFaces);
 
-  if (!faces?.length) {
-    main.innerHTML = `
-      <div class="empty">
-        <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-          <circle cx="12" cy="8" r="4"/>
-          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-        </svg>
-        No faces detected
-      </div>`;
-    return;
-  }
-
-  main.innerHTML = faces.map(f => `
-    <div class="card">
-      <img class="card-photo" src="${f.photoUrl ?? ''}" alt="${f.name}"
-           onerror="this.style.background='#1a1a2e'">
-      <div class="card-body">
-        <a class="card-name"
-           href="https://www.google.com/search?q=${encodeURIComponent(f.name + ' ' + f.country)}"
-           target="_blank" rel="noopener"
-           title="Search on Google">
-          ${f.name}
-        </a>
-        <div class="card-country">${f.country}</div>
-        <div class="card-role" title="${f.role}">${f.role}</div>
-        <div class="conf-row">
-          <div class="conf-track">
-            <div class="conf-fill" style="width:${f.confidence}%"></div>
-          </div>
-          <div class="conf-val">${f.confidence}%</div>
-        </div>
-      </div>
-    </div>`).join('');
+conn.on('DatabaseStatus', s => {
+  setDot('dbDot', s.loaded);
+  $('dbText').textContent = s.loaded
+    ? `Database: ${s.count} people`
+    : 'Loading faces database…';
 });
 
-conn.onreconnecting(() => { dot.className='dot'; connText.textContent='Reconnecting…'; });
-conn.onreconnected(() => { dot.classList.add('on'); connText.textContent='Connected'; });
-conn.onclose(()     => { dot.className='dot'; connText.textContent='Disconnected'; });
-
-conn.start().then(() => {
-  dot.classList.add('on');
-  connText.textContent = 'Connected';
+conn.on('NdiStatus', s => {
+  setDot('ndiDot', s.status === 'connected');
+  $('ndiText').textContent = NDI_LABELS[s.status] ?? `NDI: ${s.status}`;
 });
+
+conn.onreconnecting(() => { setDot('connDot', false); $('connText').textContent = 'Reconnecting…'; });
+conn.onreconnected(() => { setDot('connDot', true); $('connText').textContent = 'Connected'; });
+conn.onclose(() => { setDot('connDot', false); $('connText').textContent = 'Disconnected'; });
+
+// The first connection is not retried by SignalR itself, so retry it here if the server is not up yet.
+function startConnection() {
+  conn.start()
+    .then(() => { setDot('connDot', true); $('connText').textContent = 'Connected'; })
+    .catch(() => {
+      $('connText').textContent = 'Server unavailable, retrying…';
+      setTimeout(startConnection, 3000);
+    });
+}
+startConnection();
 </script>
 </body>
 </html>

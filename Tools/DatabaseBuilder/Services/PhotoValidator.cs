@@ -47,8 +47,9 @@ namespace DatabaseBuilder.Services
 
             if (all.Count <= 1) return all;
 
-            // medoid: the candidate most others agree with; ties go to the earliest (official source first)
-            int best = 0; // anchor = first surviving image (official, else Wikipedia lead)
+            // Anchor: the first surviving image (official source first, else the Wikipedia lead).
+            // Every other candidate must agree with the anchor to be kept.
+            int best = 0;
             
             var kept = new List<Candidate>();
             for (int j = 0; j < all.Count; j++)

@@ -2,16 +2,20 @@ using NewTek;
 using NewTek.NDI;
 using Microsoft.Extensions.Logging;
 using System.Runtime.InteropServices;
-using System.Text.Unicode;
 using System.Buffers;
 
 namespace NDI
 {
     public class NdiReceiver : IDisposable
     {
-        public sealed record NdiFrame(byte[] BrgaData, int Width, int Height, int DataSize, long TimestampTicks)
+        // NDIlib_initialize / NDIlib_destroy are process-wide. Reference-count them so that disposing
+        // one receiver (e.g. a temporary discovery receiver) does not shut the runtime down for the others.
+        private static readonly object RuntimeLock = new();
+        private static int _runtimeRefCount;
+
+        public sealed record NdiFrame(byte[] BgraData, int Width, int Height, int DataSize, long TimestampTicks)
         {
-            public void Return() => ArrayPool<byte>.Shared.Return(BrgaData);
+            public void Return() => ArrayPool<byte>.Shared.Return(BgraData);
         }
 
         public event Action<NdiFrame>? FrameReceived;
@@ -28,14 +32,13 @@ namespace NDI
             _logger = logger;
             _extraIps = config["Ndi:ExtraIps"];
 
-            if (!NDIlib.initialize())
-                throw new InvalidOperationException("NDI initialization failed");
-
+            AcquireRuntime();
             _logger.LogInformation("NDI installed. Version: {Ver}", NDIlib.version());
         }
 
-        public IReadOnlyList<string> DiscoverSources(int waitMs = 2000)
+        public IReadOnlyList<string> DiscoverSources(int waitMs = 2500)
         {
+            DestroyFinder();
 
             var findSettings = new NDIlib.find_create_t
             {
@@ -47,7 +50,6 @@ namespace NDI
             _finder = string.IsNullOrEmpty(_extraIps)
                 ? NDIlib.find_create_v2(ref findSettings)
                 : CreateFinderWithExtraIps(_extraIps);
-
 
             if (_finder == IntPtr.Zero)
             {
@@ -67,14 +69,16 @@ namespace NDI
             for (int i = 0; i < count; i++)
             {
                 var src = Marshal.PtrToStructure<NDIlib.source_t>(sourcesPtr + i * stride);
-                string name = UTF8ToString(src.p_ndi_name);
-                names.Add(name);
-                _logger.LogInformation(" - {Name}", name);
+                names.Add(UTF8ToString(src.p_ndi_name));
             }
 
             return names;
         }
 
+        /// <summary>
+        /// Connects to the source whose name contains <paramref name="sourceName"/>. When no name is given,
+        /// the first discovered source is used. A named source that is not found is an error, not a fallback.
+        /// </summary>
         public bool Connect(string? sourceName = null)
         {
             if (_finder == IntPtr.Zero)
@@ -88,21 +92,33 @@ namespace NDI
                 _logger.LogWarning("No NDI sources available.");
                 return false;
             }
-            ;
 
             int stride = Marshal.SizeOf<NDIlib.source_t>();
-            NDIlib.source_t target = Marshal.PtrToStructure<NDIlib.source_t>(sourcesPtr);
+            NDIlib.source_t target;
 
-            if (sourceName is not null)
+            if (sourceName is null)
             {
+                target = Marshal.PtrToStructure<NDIlib.source_t>(sourcesPtr);
+            }
+            else
+            {
+                bool found = false;
+                target = default;
                 for (int i = 0; i < count; i++)
                 {
                     var src = Marshal.PtrToStructure<NDIlib.source_t>(sourcesPtr + i * stride);
                     if (UTF8ToString(src.p_ndi_name).Contains(sourceName, StringComparison.OrdinalIgnoreCase))
                     {
                         target = src;
+                        found = true;
                         break;
                     }
+                }
+
+                if (!found)
+                {
+                    _logger.LogError("NDI source not found: {Name}", sourceName);
+                    return false;
                 }
             }
 
@@ -176,7 +192,7 @@ namespace NDI
             Marshal.Copy(frame.p_data, buffer, 0, size);
 
             FrameReceived?.Invoke(new NdiFrame(
-                BrgaData: buffer,
+                BgraData: buffer,
                 Width: frame.xres,
                 Height: frame.yres,
                 DataSize: size,
@@ -192,10 +208,40 @@ namespace NDI
             if (_disposed) return;
             _disposed = true;
 
-            if (_recv != IntPtr.Zero) NDIlib.recv_destroy(_recv);
-            if (_finder != IntPtr.Zero) NDIlib.find_destroy(_finder);
+            if (_recv != IntPtr.Zero)
+            {
+                NDIlib.recv_destroy(_recv);
+                _recv = IntPtr.Zero;
+            }
+            DestroyFinder();
 
-            NDIlib.destroy();
+            ReleaseRuntime();
+        }
+
+        private void DestroyFinder()
+        {
+            if (_finder == IntPtr.Zero) return;
+            NDIlib.find_destroy(_finder);
+            _finder = IntPtr.Zero;
+        }
+
+        private static void AcquireRuntime()
+        {
+            lock (RuntimeLock)
+            {
+                if (_runtimeRefCount == 0 && !NDIlib.initialize())
+                    throw new InvalidOperationException("NDI initialization failed");
+                _runtimeRefCount++;
+            }
+        }
+
+        private static void ReleaseRuntime()
+        {
+            lock (RuntimeLock)
+            {
+                if (_runtimeRefCount == 0) return;
+                if (--_runtimeRefCount == 0) NDIlib.destroy();
+            }
         }
 
         private static IntPtr CreateFinderWithExtraIps(string extraIps)

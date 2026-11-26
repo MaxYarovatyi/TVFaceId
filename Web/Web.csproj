@@ -7,7 +7,7 @@
   </PropertyGroup>
 
 <PropertyGroup>
-  <NoWarn>$(NoWarn);CS1591;CS1573;NU1902;NU1903</NoWarn>
+  <NoWarn>$(NoWarn);CS1591;CS1573;NU1902;NU1903;CA1416</NoWarn>
 </PropertyGroup>
 
 <PropertyGroup>
@@ -24,7 +24,6 @@
   <ProjectReference Include="..\Core\Core.csproj" />
   <ProjectReference Include="..\NDI\NDI.csproj" />
   <PackageReference Include = "NDILibDotNet6" Version="1.0.11" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
     <None Include="models\**\*">
     <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

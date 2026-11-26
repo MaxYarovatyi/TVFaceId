@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
+using Core.Models;
 
 namespace Core.Inference
 {
@@ -72,7 +73,7 @@ namespace Core.Inference
 
                     int idx = (srcY * width + srcX) * 4; //BGRA layout
 
-                    // SCRFD waits for RGB, normalize: (px-127.5)/128
+                    // SCRFD expects RGB, normalized as (px-127.5)/128
                     tensor[0, 0, y, x] = (bgraData[idx + 2] - 127.5f) / 128f; // R
                     tensor[0, 1, y, x] = (bgraData[idx + 1] - 127.5f) / 128f; // G
                     tensor[0, 2, y, x] = (bgraData[idx + 0] - 127.5f) / 128f; // B
@@ -121,9 +122,9 @@ namespace Core.Inference
                     float score = scores[idx];
                     if (score < ScoreThreshold) continue;
 
-                    int ancorIdx = idx / NumAnchors;
-                    float ax = (ancorIdx % gridSize) * stride;
-                    float ay = (ancorIdx / gridSize) * stride;
+                    int anchorIdx = idx / NumAnchors;
+                    float ax = (anchorIdx % gridSize) * stride;
+                    float ay = (anchorIdx / gridSize) * stride;
 
                     float x1 = ax - bboxes[idx * 4 + 0] * stride;
                     float y1 = ay - bboxes[idx * 4 + 1] * stride;
@@ -165,7 +166,7 @@ namespace Core.Inference
             for (int i = 0; i < sorted.Length; i++)
             {
                 if (suppressed[i]) continue;
-                result.Add(new DetectedFace(sorted[i].box, sorted[i].score, sorted[i].kps));
+                result.Add(new DetectedFace(sorted[i].box, sorted[i].kps));
 
                 for (int j = i + 1; j < sorted.Length; j++)
                 {

@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="Processing.NDI.Lib.x64.dll">
+    <None Include="Processing.NDI.Lib.x64.dll" Condition="Exists('Processing.NDI.Lib.x64.dll')">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

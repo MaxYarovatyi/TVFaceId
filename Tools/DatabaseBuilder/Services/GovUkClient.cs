@@ -6,14 +6,14 @@ namespace DatabaseBuilder.Services
 {
     public sealed class GovUkClient(HttpClient http)
     {
-        private const string Url = "https://www.gov.uk/api/content/government/ministers";
+        private const string Api = "https://www.gov.uk/api/content/government/ministers";
 
         public async Task<List<PersonEntry>> FetchAsync(CancellationToken ct = default)
         {
             var result = new List<PersonEntry>();
             try
             {
-                using var req = new HttpRequestMessage(HttpMethod.Get, Url);
+                using var req = new HttpRequestMessage(HttpMethod.Get, Api);
                 req.Headers.Add("User-Agent", "TVFaceId-DatabaseBuilder/1.0");
                 using var resp = await http.SendAsync(req, ct);
                 resp.EnsureSuccessStatusCode();

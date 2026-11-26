@@ -153,7 +153,7 @@ namespace Core.Inference
                     int p11 = (y1 * srcW + x1) * 4;
 
                     int outIdx = (dy * size + dx) * 3;
-                    int[] bgraOrder = [2, 1, 0]; // R, G, B з BGRA
+                    int[] bgraOrder = [2, 1, 0]; // R, G, B channel offsets within BGRA
                     for (int ch = 0; ch < 3; ch++)
                     {
                         int s = bgraOrder[ch];

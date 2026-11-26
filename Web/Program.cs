@@ -21,6 +21,15 @@ builder.Services.AddSingleton(sp => new FaceDatabase(
 builder.Services.AddSingleton<NdiManager>();
 builder.Services.AddHostedService(sp => sp.GetRequiredService<NdiManager>());
 
+var facesPath = string.IsNullOrWhiteSpace(builder.Configuration["Faces:Folder"])
+    ? "faces"
+    : builder.Configuration["Faces:Folder"]!;
+builder.Services.AddSingleton(new FacesFolder(facesPath));
+builder.Services.AddHostedService<FaceDatabaseLoader>();
+
+builder.Services.AddSingleton<VideoStreamer>();
+builder.Services.AddHostedService(sp => sp.GetRequiredService<VideoStreamer>());
+
 builder.Services.AddHostedService<RecognitionWorker>();
 
 
@@ -32,7 +41,6 @@ var app = builder.Build();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-var facesPath = builder.Configuration["Faces:Folder"] ?? "faces";
 Directory.CreateDirectory(facesPath);
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -44,25 +52,15 @@ app.UseStaticFiles(new StaticFileOptions
 app.MapControllers();
 app.MapHub<RecognitionHub>("/hub/recognition");
 
-Console.WriteLine("Loading face database...");
-var db = app.Services.GetRequiredService<FaceDatabase>();
-db.Load(facesPath);
-Console.WriteLine($"Database ready");
+app.MapGet("/video", (VideoStreamer video, HttpContext http) => video.StreamAsync(http));
 
 await app.StartAsync();
 
 var ndiManager = app.Services.GetRequiredService<NdiManager>();
-var ndiConfig = app.Configuration["Ndi:SourceName"];
 
-if (!string.IsNullOrEmpty(ndiConfig))
-{
-    Console.WriteLine($"[NDI] Connecting to configured source: {ndiConfig}");
-    await ndiManager.ConnectAsync(ndiConfig);
-}
-else
-{
+// A configured source is connected by NdiManager.StartAsync; only prompt when none is set.
+if (string.IsNullOrEmpty(app.Configuration["Ndi:SourceName"]))
     await SelectNdiSourceAsync(ndiManager);
-}
 
 Console.WriteLine("\n[S] – change NDI source | [Ctrl+C] – exit\n");
 
@@ -71,7 +69,8 @@ _ = Task.Run(async () =>
     while (!app.Lifetime.ApplicationStopping.IsCancellationRequested)
     {
         var input = Console.ReadLine();
-        if (input?.Trim().Equals("s", StringComparison.OrdinalIgnoreCase) == true)
+        if (input is null) return; // stdin closed: stop reading instead of spinning on null
+        if (input.Trim().Equals("s", StringComparison.OrdinalIgnoreCase))
         {
             Console.WriteLine("\n[NDI] Switching source...");
             await ndiManager.DisconnectAsync();
@@ -116,7 +115,9 @@ static async Task SelectNdiSourceAsync(NdiManager ndi)
             Console.WriteLine($"[{i + 1}] {sources[i]}");
 
         Console.WriteLine("Select source number (or 0 to skip): ");
-        if (int.TryParse(Console.ReadLine(), out int choice))
+        var line = Console.ReadLine();
+        if (line is null) break; // stdin closed: give up instead of prompting forever
+        if (int.TryParse(line, out int choice))
         {
             if (choice == 0) break;
             if (choice >= 1 && choice <= sources.Count)
