@@ -14,7 +14,6 @@ namespace Web.Services
         private readonly IHubContext<RecognitionHub> _hub;
         private readonly FaceDatabase _db;
         private readonly NdiManager _ndi;
-        private readonly IConfiguration _config;
         private readonly ILogger<RecognitionWorker> _logger;
         private DateTime _lastProcessed;
 
@@ -33,12 +32,11 @@ namespace Web.Services
 
         private List<FaceResult> _lastResults = [];
 
-        public RecognitionWorker(IHubContext<RecognitionHub> hub, FaceDatabase db, NdiManager ndi, IConfiguration config, ILogger<RecognitionWorker> logger)
+        public RecognitionWorker(IHubContext<RecognitionHub> hub, FaceDatabase db, NdiManager ndi, ILogger<RecognitionWorker> logger)
         {
             _hub = hub;
             _db = db;
             _ndi = ndi;
-            _config = config;
             _logger = logger;
         }
 
@@ -76,10 +74,10 @@ namespace Web.Services
         {
             if (_sleeping)
             {
-                if (!HasSceneChanged(frame.BrgaData.AsSpan(0, frame.DataSize).ToArray(), frame.Width, frame.Height))
+                if (!HasSceneChanged(frame.BgraData.AsSpan(0, frame.DataSize).ToArray(), frame.Width, frame.Height))
                     return;
 
-                var check = detector.Detect(frame.BrgaData.AsSpan(0, frame.DataSize).ToArray(), frame.Width, frame.Height);
+                var check = detector.Detect(frame.BgraData.AsSpan(0, frame.DataSize).ToArray(), frame.Width, frame.Height);
                 if (check.Count == 0) return;
 
                 _sleeping = false;
@@ -87,12 +85,12 @@ namespace Web.Services
                 _logger.LogInformation("Waking up");
             }
 
-            var detected = detector.Detect(frame.BrgaData, frame.Width, frame.Height);
+            var detected = detector.Detect(frame.BgraData, frame.Width, frame.Height);
             var results = new List<FaceResult>(detected.Count);
 
             foreach (var face in detected)
             {
-                var (person, sim) = _db.FindBest(face, frame.BrgaData.AsSpan(0, frame.DataSize).ToArray(), frame.Width, frame.Height);
+                var (person, sim) = _db.FindBest(face, frame.BgraData.AsSpan(0, frame.DataSize).ToArray(), frame.Width, frame.Height);
 
                 if (person is null) continue;
 
@@ -111,7 +109,7 @@ namespace Web.Services
             if (DateTime.UtcNow - _lastFaceAt > SleepAfter)
             {
                 _sleeping = true;
-                _logger.LogInformation("Going t sleep - no faces for {S}s", SleepAfter);
+                _logger.LogInformation("Going to sleep - no faces for {S}s", SleepAfter);
                 await _hub.Clients.All.SendAsync("RecognitionUpdate", new List<FaceResult>(), ct);
                 return;
             }

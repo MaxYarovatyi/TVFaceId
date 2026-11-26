@@ -10,9 +10,7 @@ namespace Core.Models
         public required string Name { get; init; }
         public required string Country { get; init; }
         public required string Role { get; init; }
-        public required string ImagePath { get; init; }
-        public float[] Embedding { get; init; } = [];
-        public IReadOnlyList<float[]> Embeddings {get;init;} = [];
-        public string PhotoPath {get;init;} = string.Empty;
+        public IReadOnlyList<float[]> Embeddings { get; init; } = [];
+        public string PhotoPath { get; init; } = string.Empty;
     }
 }

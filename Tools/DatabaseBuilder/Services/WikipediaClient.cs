@@ -18,7 +18,7 @@ namespace DatabaseBuilder.Services
             for (int attempt = 0; attempt < maxRetries; attempt++)
             {
                 using var req = new HttpRequestMessage(HttpMethod.Get, url);
-                req.Headers.Add("User-Agent", "MinisterRecognitionBot/1.0 (educational)");
+                req.Headers.Add("User-Agent", "TVFaceId-DatabaseBuilder/1.0");
 
                 using var resp = await http.SendAsync(req, ct);
 
@@ -44,10 +44,10 @@ namespace DatabaseBuilder.Services
             return null;
         }
 
-        public async Task<Dictionary<string, string>> GetPhotoUrlsBatchAsync(IEnumerable<string> arcticleNames, CancellationToken ct = default)
+        public async Task<Dictionary<string, string>> GetPhotoUrlsBatchAsync(IEnumerable<string> articleNames, CancellationToken ct = default)
         {
             var result = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            var batches = arcticleNames.Distinct().Chunk(50);
+            var batches = articleNames.Distinct().Chunk(50);
 
             foreach (var batch in batches)
             {

@@ -1,5 +1,4 @@
-﻿using System.Text.Json;
-using DatabaseBuilder.Models;
+﻿using DatabaseBuilder.Models;
 using DatabaseBuilder.Services;
 
 
@@ -9,7 +8,7 @@ string output = GetArg(args, "--output", DefaultOutput);
 bool daemon = args.Contains("--daemon");
 
 var http = new HttpClient { Timeout = TimeSpan.FromSeconds(120) };
-var scraper = new WikipediaListScrapper(http);
+var scraper = new WikipediaListScraper(http);
 var wikipedia = new WikipediaClient(http);
 var commons = new CommonsClient(http);
 string models = GetArg(args, "--models", "Services");
@@ -23,7 +22,7 @@ var folderWriter = new PersonFolderWriter(http, validator);
 
 if (daemon)
 {
-    Console.WriteLine("Daemon mode: running every 30 days. Ctrl+C t stop");
+    Console.WriteLine("Daemon mode: running every 30 days. Ctrl+C to stop");
     var timer = new PeriodicTimer(TimeSpan.FromDays(30));
     do
     {
@@ -43,30 +42,16 @@ async Task RunAsync()
 
     Console.WriteLine("\n --- Wikipedia lists ---");
     var persons = await scraper.ScrapeAllAsync();
-    Console.WriteLine($" Found {persons.Count} person(s) form Wikipedia lists");
+    Console.WriteLine($" Found {persons.Count} person(s) from Wikipedia lists");
 
 
     var uk = await gov.FetchAsync();
     Console.WriteLine($" GOV.UK: {uk.Count} person(s)");
     persons = MergeOfficial(uk, persons);
 
-    // Console.WriteLine("\n --- Curated list ---");
-    // var curated = LoadCurated();
-    // foreach (var c in curated)
-    // {
-    //     var entry = await wikipedia.FetchAsync(c);
-    //     if (entry is not null)
-    //     {
-    //         if (!persons.Any(p => p.Name.Equals(entry.Name, StringComparison.OrdinalIgnoreCase)))
-    //             persons.Add(entry);
-    //     }
-    //     await Task.Delay(500);
-    // }
-    // Console.WriteLine($"Total after merge: {persons.Count} person(s)");
-
     Console.WriteLine("\n --- Fetching photos ---");
     var articleNames = persons.Select(p => p.WikipediaArticle).ToList();
-    var photoMap = await wikipedia.GetPhotoUrlsBatchAsync(arcticleNames: articleNames);
+    var photoMap = await wikipedia.GetPhotoUrlsBatchAsync(articleNames: articleNames);
 
     foreach (var person in persons)
     {
@@ -86,15 +71,6 @@ async Task RunAsync()
     int saved = await folderWriter.WriteAllAsync(withPhoto, output, refresh);
 
     Console.WriteLine($"\n + Done. Saved {saved} new image(s) to '{output}'");
-}
-
-static List<CuratedPerson> LoadCurated()
-{
-    const string path = "curated.json";
-    if (!File.Exists(path)) return [];
-    var json = File.ReadAllText(path);
-    return JsonSerializer.Deserialize<List<CuratedPerson>>(json,
-    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }) ?? [];
 }
 
 static List<PersonEntry> MergeOfficial(List<PersonEntry> official, List<PersonEntry> others)

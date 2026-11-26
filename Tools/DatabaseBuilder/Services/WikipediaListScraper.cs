@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 
 namespace DatabaseBuilder.Services
 {
-    public sealed class WikipediaListScrapper(HttpClient http)
+    public sealed class WikipediaListScraper(HttpClient http)
     {
         private static readonly (string Page, string Role)[] Sources =
         [
@@ -38,7 +38,7 @@ namespace DatabaseBuilder.Services
                             results.Add(e);
                         else
                         {
-                            var existing = results.First(r => r.WikipediaArticle == key);
+                            var existing = results.First(r => string.Equals(r.WikipediaArticle, key, StringComparison.OrdinalIgnoreCase));
                             existing.AppendRole(e.Role);
                         }
                     }
@@ -117,7 +117,6 @@ namespace DatabaseBuilder.Services
                                 results.Add(new PersonEntry(ArticleOf(link), Norm(CleanText(link)), country, role));
                             }
                             found.Add(country); Bump(stats, "kept");
-                            results.Add(new PersonEntry(ArticleOf(link), Norm(CleanText(link)), country, role));
 
                         }
                     }
@@ -133,7 +132,7 @@ namespace DatabaseBuilder.Services
         {
             var url = $"https://en.wikipedia.org/wiki/{Uri.EscapeDataString(pageTitle)}";
             using var req = new HttpRequestMessage(HttpMethod.Get, url);
-            req.Headers.Add("User-Agent", "MinisterRecognitionBot/1.0");
+            req.Headers.Add("User-Agent", "TVFaceId-DatabaseBuilder/1.0");
             req.Headers.Add("Accept-Language", "en-US,en;q=0.9");
 
             using var resp = await http.SendAsync(req, ct);
@@ -207,9 +206,9 @@ namespace DatabaseBuilder.Services
     "Estonia","Finland","France","Germany","Greece","Hungary","Ireland","Italy",
     "Latvia","Lithuania","Luxembourg","Malta","Netherlands","Poland","Portugal",
     "Romania","Slovakia","Slovenia","Spain","Sweden",
-    // Ключові союзники та партнери
+    // Key allies and partners
     "United States","United Kingdom","Ukraine","Canada","Turkey","Norway",
-    "Iceland","North Macedonia","Montenegro","Albania","United Kingdom",
+    "Iceland","North Macedonia","Montenegro","Albania",
     "NATO","EU","European Union"
         };
 

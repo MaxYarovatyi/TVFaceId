@@ -11,7 +11,10 @@ namespace Core.Database
 {
     public sealed class FaceDatabase
     {
-        private readonly List<PersonRecord> _persons = [];
+        // Replaced as a whole when loading finishes, so FindBest never sees a half-built list.
+        private volatile IReadOnlyList<PersonRecord> _persons = [];
+        private volatile bool _loaded;
+
         private readonly FaceDetector _detector;
         private readonly FaceRecognizer _recognizer;
         private readonly ILogger<FaceDatabase> _logger;
@@ -23,32 +26,41 @@ namespace Core.Database
             _logger = logger;
         }
 
+        /// <summary>True once <see cref="Load"/> has finished (even if the folder was missing).</summary>
+        public bool IsLoaded => _loaded;
+
+        public int PersonCount => _persons.Count;
 
         public void Load(string facesFolder)
         {
+            var loaded = new List<PersonRecord>();
+
             if (!Directory.Exists(facesFolder))
             {
                 _logger.LogWarning("Faces folder not found: {Path}", facesFolder);
-                return;
             }
-
-            foreach (var dir in Directory.EnumerateDirectories(facesFolder))
+            else
             {
-                try
+                foreach (var dir in Directory.EnumerateDirectories(facesFolder))
                 {
-                    var record = ProcessPersonFolder(dir, facesFolder);
-                    if (record is null) continue;
-                    _persons.Add(record);
-                    _logger.LogInformation(" + {Name} | {Country} | {Role} ({N} photo(s))",
-                        record.Name, record.Country, record.Role, record.Embeddings.Count);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(" x {Dir}: {Err}", Path.GetFileName(dir), ex.Message);
+                    try
+                    {
+                        var record = ProcessPersonFolder(dir, facesFolder);
+                        if (record is null) continue;
+                        loaded.Add(record);
+                        _logger.LogInformation(" + {Name} | {Country} | {Role} ({N} photo(s))",
+                            record.Name, record.Country, record.Role, record.Embeddings.Count);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(" x {Dir}: {Err}", Path.GetFileName(dir), ex.Message);
+                    }
                 }
             }
 
-            _logger.LogInformation("Database ready: {Count} person(s)", _persons.Count);
+            _persons = loaded;
+            _loaded = true;
+            _logger.LogInformation("Database ready: {Count} person(s)", loaded.Count);
         }
 
         private sealed record PersonMeta(string Name, string Country, string Role);
@@ -91,14 +103,10 @@ namespace Core.Database
                 Name = meta.Name,
                 Country = meta.Country,
                 Role = meta.Role,
-                ImagePath = firstPhoto!,
                 PhotoPath = Path.GetRelativePath(root, firstPhoto!).Replace('\\', '/'),
-                Embedding = embeddings[0],
                 Embeddings = embeddings
             };
         }
-
-
 
         public (PersonRecord? Person, float Similarity) FindBest
         (
@@ -109,13 +117,14 @@ namespace Core.Database
             float threshold = 0.71f
         )
         {
-            if (_persons.Count == 0) return (null, 0f);
+            var persons = _persons;
+            if (persons.Count == 0) return (null, 0f);
 
             float[] query = _recognizer.GetEmbedding(bgraData, width, height, face.Landmarks);
             float bestSim = float.MinValue;
             PersonRecord? bestPerson = null;
 
-            foreach (var person in _persons)
+            foreach (var person in persons)
             {
                 foreach (var emb in person.Embeddings)
                 {
@@ -128,7 +137,5 @@ namespace Core.Database
                 ? (bestPerson, bestSim)
                 : (null, bestSim);
         }
-
-
     }
 }

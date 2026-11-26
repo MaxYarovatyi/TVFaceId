@@ -71,16 +71,16 @@ namespace NDI
                     _frameCount,
                     frame.Width,
                     frame.Height,
-                    frame.BrgaData.Length / 1024,
+                    frame.BgraData.Length / 1024,
                     frame.TimestampTicks
                 );
 
-                var faces = _detector!.Detect(frame.BrgaData, frame.Width, frame.Height);
+                var faces = _detector!.Detect(frame.BgraData, frame.Width, frame.Height);
                 _logger.LogInformation("Detected {Count} face(s)", faces.Count);
 
                 foreach (var face in faces)
                 {
-                    var (person, sim) = _database.FindBest(face, frame.BrgaData.AsSpan(0, frame.DataSize).ToArray(), frame.Width, frame.Height);
+                    var (person, sim) = _database.FindBest(face, frame.BgraData.AsSpan(0, frame.DataSize).ToArray(), frame.Width, frame.Height);
                     if (person is not null)
                         _logger.LogInformation("Recognized: {Name} ({Country}) sim={Sim:F3}",
                             person.Name, person.Country, sim);

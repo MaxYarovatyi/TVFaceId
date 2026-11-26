@@ -1,11 +1,10 @@
 using System.Drawing;
 
-namespace Core
+namespace Core.Models
 {
     public record DetectedFace
     (
         RectangleF BoundingBox,
-        float Score,
         PointF[] Landmarks
     );
 }
